@@ -22,7 +22,7 @@ BEGIN {
    $VERSION = 0.01;
 
    @EXPORT = qw();
-   @EXPORT_OK = qw(isLegalUTF8String);
+   @EXPORT_OK = qw(isLegalUTF8String is_utf8);
 
    require XSLoader;
    XSLoader::load Unicode::CheckUTF8, $VERSION;

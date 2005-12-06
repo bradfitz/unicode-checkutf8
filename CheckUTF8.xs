@@ -25,13 +25,6 @@
  * remains attached.
  */
 
-
-typedef unsigned char UTF8;
-typedef unsigned char Boolean;
-
-#define false           0
-#define true            1
-
 static const char trailingBytesForUTF8[256] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -43,26 +36,26 @@ static const char trailingBytesForUTF8[256] = {
     2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
 };
 
-static Boolean isLegalUTF8(UTF8 *source, int length) {
-        UTF8 a;
-        UTF8 *srcptr = source+length;
+static int isLegalUTF8(unsigned char *source, int length) {
+        unsigned char a;
+        unsigned char *srcptr = (unsigned char*) source+length;
         switch (length) {
-        default: return false;
+        default: return 0;
                 /* Everything else falls through when "true"... */
-        case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-        case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-        case 2: if ((a = (*--srcptr)) > 0xBF) return false;
+        case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return 0;
+        case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return 0;
+        case 2: if ((a = (*--srcptr)) > 0xBF) return 0;
                 switch (*source) {
                     /* no fall-through in this inner switch */
-                    case 0xE0: if (a < 0xA0) return false; break;
-                    case 0xF0: if (a < 0x90) return false; break;
-                    case 0xF4: if (a > 0x8F) return false; break;
-                    default:  if (a < 0x80) return false;
+                    case 0xE0: if (a < 0xA0) return 0; break;
+                    case 0xF0: if (a < 0x90) return 0; break;
+                    case 0xF4: if (a > 0x8F) return 0; break;
+                    default:  if (a < 0x80) return 0;
                 }
-        case 1: if (*source >= 0x80 && *source < 0xC2) return false;
-                if (*source > 0xF4) return false;
+        case 1: if (*source >= 0x80 && *source < 0xC2) return 0;
+                if (*source > 0xF4) return 0;
         }
-        return true;
+        return 1;
 }
 
 /********************* End code from Unicode, Inc. ***************/
@@ -72,9 +65,9 @@ static Boolean isLegalUTF8(UTF8 *source, int length) {
  *
  */
 
-Boolean isLegalUTF8String(char *str, int len)
+int isLegalUTF8String(char *str, int len)
 {
-    UTF8 *cp = str;
+    char *cp = str;
     int i;
     while (*cp) {
         /* how many bytes follow this character? */
@@ -82,12 +75,12 @@ Boolean isLegalUTF8String(char *str, int len)
 
         /* check for early termination of string: */
         for (i=1; i<length; i++) {
-            if (cp[i] == 0) return false;
+            if (cp[i] == 0) return 0;
         }
 
         /* is this a valid group of characters? */
         if (!isLegalUTF8(cp, length))
-            return false;
+            return 0;
 
         cp += length;
     }
@@ -95,15 +88,24 @@ Boolean isLegalUTF8String(char *str, int len)
     /* if we didn't make it to the end, there must've been an internal null
      * in the perl string, which we're saying is bogus utf-8, since there's
      * no point for users giving us null chars.                             */
-    return (cp == str+len) ? true : false;
+    return (cp == str+len) ? 1 : 0;
 }
 
 MODULE = Unicode::CheckUTF8	PACKAGE = Unicode::CheckUTF8
 
 PROTOTYPES: DISABLE
 
+int
+is_utf8 (str)
+        SV * str
+             CODE:
+                int len;
+                char *c_str = SvPV(str, len);
+                RETVAL = isLegalUTF8String(c_str, len);
+             OUTPUT:
+                 RETVAL
 
-Boolean
+int
 isLegalUTF8String (str, len)
 	char *	str
 	int	len
