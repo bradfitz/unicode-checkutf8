@@ -5,7 +5,7 @@ my %options = %{
     '/usr/share/perl/5.8/ExtUtils/typemap'
   ],
   'NAME' => 'Unicode::CheckUTF8',
-  'VERSION' => '0.01'
+  'VERSION_FROM' => 'CheckUTF8.pm'
 }
 };
 WriteMakefile(%options);
