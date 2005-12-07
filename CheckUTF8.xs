@@ -25,6 +25,29 @@
  * remains attached.
  */
 
+
+typedef unsigned char UTF8;
+typedef unsigned char Boolean;
+
+#define false           0
+#define true            1
+
+
+static const char validSingleByte[256] = {
+/* 00 */  0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* \t, \n, \r allowed */
+/* 20 */  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 40 */  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 60 */  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+
+          /* if (*source >= 0x80 && *source < 0xC2) return false */
+/* 80 */  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+/* a0 */  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+/* c0 */  0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+
+          /* if (*source > 0xF4) return false; */
+/* e0 */  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0
+};
+
 static const char trailingBytesForUTF8[256] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -36,26 +59,26 @@ static const char trailingBytesForUTF8[256] = {
     2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
 };
 
-static int isLegalUTF8(unsigned char *source, int length) {
-        unsigned char a;
-        unsigned char *srcptr = (unsigned char*) source+length;
+static Boolean isLegalUTF8(UTF8 *source, int length) {
+        UTF8 a;
+        UTF8 *srcptr = source+length;
         switch (length) {
-        default: return 0;
+        default: return false;
                 /* Everything else falls through when "true"... */
-        case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return 0;
-        case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return 0;
-        case 2: if ((a = (*--srcptr)) > 0xBF) return 0;
+        case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        case 2: if ((a = (*--srcptr)) > 0xBF) return false;
                 switch (*source) {
                     /* no fall-through in this inner switch */
-                    case 0xE0: if (a < 0xA0) return 0; break;
-                    case 0xF0: if (a < 0x90) return 0; break;
-                    case 0xF4: if (a > 0x8F) return 0; break;
-                    default:  if (a < 0x80) return 0;
+                    case 0xE0: if (a < 0xA0) return false; break;
+                    case 0xF0: if (a < 0x90) return false; break;
+                    case 0xF4: if (a > 0x8F) return false; break;
+                    default:  if (a < 0x80) return false;
                 }
-        case 1: if (*source >= 0x80 && *source < 0xC2) return 0;
-                if (*source > 0xF4) return 0;
+
+        case 1: return validSingleByte[*source];
         }
-        return 1;
+        return true;
 }
 
 /********************* End code from Unicode, Inc. ***************/
@@ -67,7 +90,7 @@ static int isLegalUTF8(unsigned char *source, int length) {
 
 int isLegalUTF8String(char *str, int len)
 {
-    char *cp = str;
+    UTF8 *cp = str;
     int i;
     while (*cp) {
         /* how many bytes follow this character? */
