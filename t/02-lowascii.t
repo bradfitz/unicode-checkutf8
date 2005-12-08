@@ -1,4 +1,4 @@
-use Test::More no_plan => 1;
+use Test::More tests => 128;
 use Unicode::CheckUTF8 qw(is_utf8);
 
 for (0..127) {
