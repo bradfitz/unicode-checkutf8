@@ -1,6 +1,7 @@
 CheckUTF8.pm
 CheckUTF8.xs
 INLINE.h
+CHANGES
 Makefile.PL
 MANIFEST			This list of files
 t/00-use.t
@@ -44,3 +45,4 @@ t/data/GOOD-chr-9.xml
 t/data/GOOD-quickbrown.xml
 t/data/GOOD-tex.xml
 
+META.yml                                 Module meta-data (added by MakeMaker)
