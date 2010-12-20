@@ -59,9 +59,9 @@ static const char trailingBytesForUTF8[256] = {
     2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
 };
 
-static Boolean isLegalUTF8(UTF8 *source, int length) {
+static Boolean isLegalUTF8(const UTF8 *source, int length) {
         UTF8 a;
-        UTF8 *srcptr = source+length;
+        const UTF8 *srcptr = source+length;
         switch (length) {
         default: return false;
                 /* Everything else falls through when "true"... */
@@ -88,9 +88,9 @@ static Boolean isLegalUTF8(UTF8 *source, int length) {
  *
  */
 
-int isLegalUTF8String(char *str, int len)
+int isLegalUTF8String(const char *str, int len)
 {
-    UTF8 *cp = str;
+    const UTF8 *cp = str;
     int i;
     while (*cp) {
         /* how many bytes follow this character? */
@@ -111,7 +111,7 @@ int isLegalUTF8String(char *str, int len)
     /* if we didn't make it to the end, there must've been an internal null
      * in the perl string, which we're saying is bogus utf-8, since there's
      * no point for users giving us null chars.                             */
-    return (cp == str+len) ? 1 : 0;
+    return (cp == (UTF8*)(str+len)) ? 1 : 0;
 }
 
 MODULE = Unicode::CheckUTF8	PACKAGE = Unicode::CheckUTF8
@@ -122,14 +122,14 @@ int
 is_utf8 (str)
         SV * str
              CODE:
-                int len;
-                char *c_str = SvPV(str, len);
+                STRLEN len;
+                const char *c_str = SvPV(str, len);
                 RETVAL = isLegalUTF8String(c_str, len);
              OUTPUT:
                  RETVAL
 
 int
 isLegalUTF8String (str, len)
-	char *	str
-	int	len
+	const char *	str
+	STRLEN	len
 

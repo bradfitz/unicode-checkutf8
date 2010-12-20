@@ -34,7 +34,7 @@ package Unicode::CheckUTF8;
 use base 'Exporter';
 
 BEGIN {
-   $VERSION = "1.02";
+   $VERSION = "1.03";
 
    @EXPORT = qw();
    @EXPORT_OK = qw(isLegalUTF8String is_utf8);
